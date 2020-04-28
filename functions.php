@@ -6,9 +6,9 @@
  * @subpackage Adams
  */
 if (!defined('THEME_NAME')) define('THEME_NAME', 'Adams');
-if (!defined('THEME_DB_VERSION')) define('THEME_DB_VERSION', 'v1.4.21');
+if (!defined('THEME_DB_VERSION')) define('THEME_DB_VERSION', 'v1.4.26');
 if (version_compare($GLOBALS['wp_version'], '4.4-alpha', '<')) {
-    wp_die('请升级到4.4以上版本');
+    wp_die('Please upgrade to version 4.4 or higher');
 }
 
 require(get_template_directory() . '/inc/core.de.php');
@@ -45,12 +45,14 @@ function biji_enqueue_scripts()
             'url' => admin_url('admin-ajax.php')
         )
     );
-    wp_enqueue_script(
-        'prettify',
-        '//cdn.staticfile.org/prettify/r298/prettify.js',
-        array(),
-        THEME_DB_VERSION
-    );
+    if(!get_theme_mod('biji_setting_prettify')) {
+        wp_enqueue_script(
+            'prettify',
+            '//cdn.staticfile.org/prettify/r298/prettify.js',
+            array(),
+            THEME_DB_VERSION
+        );
+    }
     wp_enqueue_script(
         'instantclick',
         '//cdn.staticfile.org/instantclick/3.0.1/instantclick.min.js',
@@ -72,8 +74,6 @@ remove_action('wp_print_styles', 'print_emoji_styles');
 remove_filter('the_content_feed', 'wp_staticize_emoji');
 remove_filter('comment_text_rss', 'wp_staticize_emoji');
 remove_filter('wp_mail', 'wp_staticize_emoji_for_email');
-add_filter('login_errors', create_function('$a', "return null;")); //取消登录错误提示
-// add_filter( 'show_admin_bar', '__return_false' ); //删除AdminBar
 if (function_exists('add_theme_support')) add_theme_support('post-thumbnails'); //添加特色缩略图支持
 
 // 禁止wp-embed.min.js
@@ -161,30 +161,31 @@ function enable_more_buttons($buttons)
 
 add_filter("mce_buttons_3", "enable_more_buttons");
 
+if(!get_theme_mod('biji_setting_prettify')) {
 // 代码高亮
-function dangopress_esc_html($content)
-{
-    if (!is_feed() || !is_robots()) {
-        $content = preg_replace('/<code(.*)>/i', "<code class=\"prettyprint\" \$1>", $content);
+    function dangopress_esc_html($content)
+    {
+        if (!is_feed() || !is_robots()) {
+            $content = preg_replace('/<code(.*)>/i', "<code class=\"prettyprint\" \$1>", $content);
+        }
+        $regex = '/(<code.*?>)(.*?)(<\/code>)/sim';
+        return preg_replace_callback($regex, 'dangopress_esc_callback', $content);
     }
-    $regex = '/(<code.*?>)(.*?)(<\/code>)/sim';
-    return preg_replace_callback($regex, 'dangopress_esc_callback', $content);
+
+    function dangopress_esc_callback($matches)
+    {
+        $tag_open = $matches[1];
+        $content = $matches[2];
+        $tag_close = $matches[3];
+        //$content = htmlspecialchars($content, ENT_NOQUOTES, get_bloginfo('charset'));
+        $content = esc_html($content);
+
+        return $tag_open . $content . $tag_close;
+    }
+
+    add_filter('the_content', 'dangopress_esc_html', 2);
+    add_filter('comment_text', 'dangopress_esc_html', 2);
 }
-
-function dangopress_esc_callback($matches)
-{
-    $tag_open = $matches[1];
-    $content = $matches[2];
-    $tag_close = $matches[3];
-    //$content = htmlspecialchars($content, ENT_NOQUOTES, get_bloginfo('charset'));
-    $content = esc_html($content);
-
-    return $tag_open . $content . $tag_close;
-}
-
-add_filter('the_content', 'dangopress_esc_html', 2);
-add_filter('comment_text', 'dangopress_esc_html', 2);
-
 // 评论@回复
 function idevs_comment_add_at($comment_text, $comment = '')
 {
