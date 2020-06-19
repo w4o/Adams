@@ -96,8 +96,8 @@
         }
         <?php if(!get_theme_mod('biji_setting_placard')){ ?>
         if ($('.placard').length) {
-            $.get("https://v1.hitokoto.cn?encode=text", (tetx) => {
-                $('.placard').text(tetx);
+            $.get("https://v1.hitokoto.cn", (data) => {
+                $('.placard').text(data.hitokoto);
             });
         }
         <?php }?>
