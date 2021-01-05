@@ -56,8 +56,8 @@
                     'exclude': '.readerswall img,.gallery a img,.attachment a img'
                 });
                 <?php } if(!get_theme_mod('biji_setting_lately')){ ?>
-                $.lately({
-                    'target': '.commentmetadata a,.infos time,.post-list time'
+                Lately({
+                    'target': '.commentmetadata a:first-child,.infos time,.post-list time'
                 });
                 <?php } if(!get_theme_mod('biji_setting_prettify')){ ?>
                 prettyPrint();
